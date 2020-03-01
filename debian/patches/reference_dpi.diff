@@ -1,0 +1,23 @@
+Description: use 128 as a reference DPI for small screens
+Origin: upstream, https://code.qt.io/cgit/qt/qtbase.git/commit/?id=5e6bbbc1b86905c4
+Last-Update: 2018-10-29
+
+---
+ src/plugins/platforms/xcb/qxcbscreen.cpp |    6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/src/plugins/platforms/xcb/qxcbscreen.cpp
++++ b/src/plugins/platforms/xcb/qxcbscreen.cpp
+@@ -746,7 +746,11 @@ void QXcbScreen::updateGeometry(const QR
+         m_sizeMillimeters = sizeInMillimeters(geometry.size(), m_virtualDesktop->dpi());
+ 
+     qreal dpi = geometry.width() / physicalSize().width() * qreal(25.4);
+-    m_pixelDensity = qMax(1, qRound(dpi/96));
++
++    // Use 128 as a reference DPI on small screens. This favors "small UI" over "large UI".
++    qreal referenceDpi = physicalSize().width() <= 320 ? 128 : 96;
++
++    m_pixelDensity = qMax(1, qRound(dpi/referenceDpi));
+     m_geometry = geometry;
+     m_availableGeometry = geometry & m_virtualDesktop->workArea();
+     QWindowSystemInterface::handleScreenGeometryChange(QPlatformScreen::screen(), m_geometry, m_availableGeometry);

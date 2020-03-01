@@ -1,0 +1,45 @@
+Description: fix selection rendering issues if rounding leads to left-out pixels
+ instead of manual qFloor, use the toAlignedRect() function to get the minimal enclosing rectangle
+ this will in some cases over-paint one-pixel, which is preferable to under-paint which
+ leaves gaps inside painting text lines that can not be fixed by the user of the painting routines
+Author: Christoph Cullmann <cullmann@kde.org>
+Origin: upstream
+Applied-Upstream: 47904bb
+Last-Updated: 2018-07-19
+--- a/src/gui/text/qtextlayout.cpp
++++ b/src/gui/text/qtextlayout.cpp
+@@ -1006,10 +1006,8 @@ static void addSelectedRegionsToPath(QTe
+             }
+ 
+             if (lastSelectionWidth > 0) {
+-                QRectF rect = boundingRect & QRectF(lastSelectionX.toReal(), selectionY, lastSelectionWidth.toReal(), lineHeight);
+-                rect.moveLeft(qFloor(rect.left()));
+-                rect.moveTop(qFloor(rect.top()));
+-                region->addRect(rect);
++                const QRectF rect = boundingRect & QRectF(lastSelectionX.toReal(), selectionY, lastSelectionWidth.toReal(), lineHeight);
++                region->addRect(rect.toAlignedRect());
+             }
+ 
+             lastSelectionX = selectionX;
+@@ -1017,10 +1015,8 @@ static void addSelectedRegionsToPath(QTe
+         }
+     }
+     if (lastSelectionWidth > 0) {
+-        QRectF rect = boundingRect & QRectF(lastSelectionX.toReal(), selectionY, lastSelectionWidth.toReal(), lineHeight);
+-        rect.moveLeft(qFloor(rect.left()));
+-        rect.moveTop(qFloor(rect.top()));
+-        region->addRect(rect);
++        const QRectF rect = boundingRect & QRectF(lastSelectionX.toReal(), selectionY, lastSelectionWidth.toReal(), lineHeight);
++        region->addRect(rect.toAlignedRect());
+     }
+ }
+ 
+@@ -2135,7 +2131,7 @@ static void setPenAndDrawBackground(QPai
+ 
+     QBrush bg = chf.background();
+     if (bg.style() != Qt::NoBrush && !chf.property(SuppressBackground).toBool())
+-        p->fillRect(QRectF(qFloor(r.x()), qFloor(r.y()), r.width(), r.height()), bg);
++        p->fillRect(r.toAlignedRect(), bg);
+     if (c.style() != Qt::NoBrush) {
+         p->setPen(QPen(c, 0));
+     }

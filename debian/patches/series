@@ -1,0 +1,27 @@
+# Backported from upstream.
+fix-selection-rendering.patch
+reference_dpi.diff
+remove_need_for_glXGetProcAddressARB.patch
+mysql_free_results_when_qsqlquery_finished_is_called.patch
+qprintdialog_duplex.diff
+cve-2019-18281.diff
+raw_printers.diff
+ensure-qtabletevent-is-not-pre-accepted.patch
+repolish_run_on_direct_children.diff
+CVE-2020-0569.diff
+CVE-2020-0570.diff
+
+# Debian specific.
+gnukfreebsd.diff
+no_htmlinfo_example.diff
+remove_privacy_breachs.diff
+link_fbclient.diff
+gnukfreebsd_linker_warnings.diff
+armv4.diff
+nonlinux_utime.diff
+no_arc4random_buf.diff
+qdoc_default_incdirs.diff
+kfreebsd_qstrncpy.diff
+alpha_atimensec.diff
+revert_remove_our_use_of_syscall_for-statx.patch
+hurd_missing_include.diff

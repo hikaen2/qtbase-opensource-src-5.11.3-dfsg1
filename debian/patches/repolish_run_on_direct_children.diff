@@ -1,0 +1,23 @@
+Description: QStyleSheetStyle::repolish: only run on direct children
+ When re-parenting, some widgets change their children. For example
+ QLabel, when set to rich text, will not update, until receiving a polish
+ call, at which time getting a list of all children recursively and then
+ trying to call functions on them will crash, since the children change
+ in the middle of this operation.
+Origin: upstream, https://code.qt.io/cgit/qt/qtbase.git/commit/?id=21dcb96ddca357a6
+Last-Update: 2019-09-06
+
+--- a/src/widgets/styles/qstylesheetstyle.cpp
++++ b/src/widgets/styles/qstylesheetstyle.cpp
+@@ -2878,7 +2878,10 @@ void QStyleSheetStyle::polish(QPalette &
+ 
+ void QStyleSheetStyle::repolish(QWidget *w)
+ {
+-    QList<const QObject *> children = w->findChildren<const QObject *>(QString());
++    QList<const QObject *> children;
++    children.reserve(w->children().size() + 1);
++    for (auto child: qAsConst(w->children()))
++        children.append(child);
+     children.append(w);
+     styleSheetCaches->styleSheetCache.remove(w);
+     updateObjects(children);

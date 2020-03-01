@@ -1,0 +1,38 @@
+Description: ensure that QTabletEvent is not pre-accepted before sending
+ In QWidget-world it's normal for input events to have the accepted
+ flag false by default, so that it's obvious after visiting a widget
+ subclass that does not override a particular handler function that it
+ did not handle that event type at all.  For tablet events in
+ particular, the contract (to which we've been paying more attention to
+ ensure that QTBUG-47007 remains properly fixed) is that if a
+ QTabletEvent is not accepted, a mouse event will follow.
+ Tablet-unaware applications need to get the same mouse events from a
+ Wacom stylus as they would receive from an actual mouse.
+ .
+ In this case the issue was missing hover events (mouse movements
+ in which no mouse button is pressed).  Without those, the enterEvent
+ and exitEvent virtuals are also not invoked properly.
+Origin: upstream, https://code.qt.io/cgit/qt/qtbase.git/commit/?id=b4b706d454b785ae
+Bug: https://bugs.debian.org/935627
+Last-Update: 2019-08-24
+
+--- a/src/widgets/kernel/qapplication.cpp
++++ b/src/widgets/kernel/qapplication.cpp
+@@ -3374,6 +3374,7 @@ bool QApplication::notify(QObject *recei
+                                 tablet->tangentialPressure(), tablet->rotation(), tablet->z(),
+                                 tablet->modifiers(), tablet->uniqueId(), tablet->button(), tablet->buttons());
+                 te.spont = e->spontaneous();
++                te.setAccepted(false);
+                 res = d->notify_helper(w, w == receiver ? tablet : &te);
+                 eventAccepted = ((w == receiver) ? tablet : &te)->isAccepted();
+                 e->spont = false;
+--- a/src/widgets/kernel/qwidgetwindow.cpp
++++ b/src/widgets/kernel/qwidgetwindow.cpp
+@@ -1021,6 +1021,7 @@ void QWidgetWindow::handleTabletEvent(QT
+                         event->pressure(), event->xTilt(), event->yTilt(), event->tangentialPressure(),
+                         event->rotation(), event->z(), event->modifiers(), event->uniqueId(), event->button(), event->buttons());
+         ev.setTimestamp(event->timestamp());
++        ev.setAccepted(false);
+         QGuiApplication::forwardEvent(widget, &ev, event);
+         event->setAccepted(ev.isAccepted());
+     }

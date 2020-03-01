@@ -1,0 +1,16 @@
+Description: add missing features.h include to hurd-g++ mkspec
+Author: Samuel Thibault <sthibault@debian.org>
+Forwarded: https://codereview.qt-project.org/252444
+Bug: https://bugs.debian.org/920613
+Last-Update: 2019-02-07
+
+--- a/mkspecs/hurd-g++/qplatformdefs.h
++++ b/mkspecs/hurd-g++/qplatformdefs.h
+@@ -59,6 +59,7 @@
+ // We are hot - unistd.h should have turned on the specific APIs we requested
+ 
+ 
++#include <features.h>
+ #include <pthread.h>
+ #include <dirent.h>
+ #include <fcntl.h>

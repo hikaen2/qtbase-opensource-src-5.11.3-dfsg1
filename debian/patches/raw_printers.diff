@@ -1,0 +1,92 @@
+Description: cups: support raw printers
+ They don't have a ppd but we don't *really* need a ppd to just print.
+Origin: upstream, https://code.qt.io/cgit/qt/qtbase.git/commit/?id=84cc8d0badb4abc3
+Last-Update: 2019-06-16
+
+--- a/src/plugins/printsupport/cups/qcupsprintengine.cpp
++++ b/src/plugins/printsupport/cups/qcupsprintengine.cpp
+@@ -104,7 +104,11 @@ void QCupsPrintEngine::setProperty(Print
+         break;
+     case PPK_QPageLayout: {
+         QPageLayout pageLayout = value.value<QPageLayout>();
+-        if (pageLayout.isValid() && (d->m_printDevice.isValidPageLayout(pageLayout, d->resolution) || d->m_printDevice.supportsCustomPageSizes())) {
++        if (pageLayout.isValid() && (d->m_printDevice.isValidPageLayout(pageLayout, d->resolution)
++                                     || d->m_printDevice.supportsCustomPageSizes()
++                                     || d->m_printDevice.supportedPageSizes().isEmpty())) {
++            // supportedPageSizes().isEmpty() because QPageSetupWidget::initPageSizes says
++            // "If no available printer page sizes, populate with all page sizes"
+             d->m_pageLayout = pageLayout;
+             d->setPageSize(pageLayout.pageSize());
+         }
+--- a/src/plugins/printsupport/cups/qppdprintdevice.cpp
++++ b/src/plugins/printsupport/cups/qppdprintdevice.cpp
+@@ -71,7 +71,7 @@ QPpdPrintDevice::QPpdPrintDevice(const Q
+             m_cupsInstance = parts.at(1).toUtf8();
+         loadPrinter();
+ 
+-        if (m_cupsDest && m_ppd) {
++        if (m_cupsDest) {
+             m_name = printerOption("printer-info");
+             m_location = printerOption("printer-location");
+             m_makeAndModel = printerOption("printer-make-and-model");
+@@ -87,10 +87,6 @@ QPpdPrintDevice::QPpdPrintDevice(const Q
+             // Cups ppd_file_t variable_sizes custom_min custom_max
+             // PPD MaxMediaWidth MaxMediaHeight
+             m_supportsCustomPageSizes = type & CUPS_PRINTER_VARIABLE;
+-            m_minimumPhysicalPageSize = QSize(m_ppd->custom_min[0], m_ppd->custom_min[1]);
+-            m_maximumPhysicalPageSize = QSize(m_ppd->custom_max[0], m_ppd->custom_max[1]);
+-            m_customMargins = QMarginsF(m_ppd->custom_margins[0], m_ppd->custom_margins[3],
+-                                        m_ppd->custom_margins[2], m_ppd->custom_margins[1]);
+         }
+     }
+ }
+@@ -107,7 +103,7 @@ QPpdPrintDevice::~QPpdPrintDevice()
+ 
+ bool QPpdPrintDevice::isValid() const
+ {
+-    return m_cupsDest && m_ppd;
++    return m_cupsDest;
+ }
+ 
+ bool QPpdPrintDevice::isDefault() const
+@@ -152,8 +148,8 @@ void QPpdPrintDevice::loadPageSizes() co
+                 }
+             }
+         }
+-        m_havePageSizes = true;
+     }
++    m_havePageSizes = true;
+ }
+ 
+ QPageSize QPpdPrintDevice::defaultPageSize() const
+@@ -505,10 +501,11 @@ void QPpdPrintDevice::loadPrinter()
+             ppdMarkDefaults(m_ppd);
+             cupsMarkOptions(m_ppd, m_cupsDest->num_options, m_cupsDest->options);
+             ppdLocalize(m_ppd);
+-        } else {
+-            cupsFreeDests(1, m_cupsDest);
+-            m_cupsDest = 0;
+-            m_ppd = 0;
++
++            m_minimumPhysicalPageSize = QSize(m_ppd->custom_min[0], m_ppd->custom_min[1]);
++            m_maximumPhysicalPageSize = QSize(m_ppd->custom_max[0], m_ppd->custom_max[1]);
++            m_customMargins = QMarginsF(m_ppd->custom_margins[0], m_ppd->custom_margins[3],
++                                        m_ppd->custom_margins[2], m_ppd->custom_margins[1]);
+         }
+     }
+ }
+--- a/src/printsupport/dialogs/qpagesetupdialog_unix.cpp
++++ b/src/printsupport/dialogs/qpagesetupdialog_unix.cpp
+@@ -415,6 +415,12 @@ void QPageSetupWidget::setPrinter(QPrint
+     initPageSizes();
+     updateWidget();
+     updateSavedValues();
++
++    if (m_ui.pageSizeCombo->currentIndex() == -1) {
++        // This can happen in raw printers that since they don't have a default
++        // page size none will get selected so just default to the first size (A4)
++        m_ui.pageSizeCombo->setCurrentIndex(0);
++    }
+ }
+ 
+ // Update the widget with the current settings

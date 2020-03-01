@@ -1,0 +1,32 @@
+Description: catch linker warnings in some config tests
+ Without this, qmake wrongly thinks that the tests succeed, for example:
+ .
+ ./config.tests/unix/futimens/futimens.cpp:44: warning: futimens is not implemented and will always fail
+ test config.corelib.tests.futimens succeeded
+Author: Dmitry Shachnev <mitya57@debian.org>
+Forwarded: https://codereview.qt-project.org/163214 (rejected)
+Bug: https://bugs.debian.org/827935
+Last-Update: 2017-12-07
+
+--- a/config.tests/unix/futimens/futimens.pro
++++ b/config.tests/unix/futimens/futimens.pro
+@@ -4,3 +4,4 @@ SOURCES += futimens.cpp
+ # targets. This simplifies the logic at the call site dramatically, as it isn't
+ # strictly needed compared to futimes().
+ darwin: QMAKE_CXXFLAGS += -Werror=unguarded-availability
++QMAKE_LFLAGS += -Wl,--fatal-warnings
+--- a/config.tests/unix/getentropy/getentropy.pro
++++ b/config.tests/unix/getentropy/getentropy.pro
+@@ -1 +1,2 @@
+ SOURCES = getentropy.cpp
++QMAKE_LFLAGS += -Wl,--fatal-warnings
+--- a/src/corelib/configure.json
++++ b/src/corelib/configure.json
+@@ -254,6 +254,7 @@
+             "label": "O_CLOEXEC",
+             "type": "compile",
+             "test": {
++                "qmake": "QMAKE_LFLAGS += -Wl,--fatal-warnings",
+                 "head": "#define _GNU_SOURCE 1",
+                 "include": [ "sys/types.h", "sys/socket.h", "fcntl.h", "unistd.h" ],
+                 "main": [

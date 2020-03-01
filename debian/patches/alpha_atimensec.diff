@@ -1,0 +1,30 @@
+Description: fix ambiguous definition of atime/mtime/ctime on alpha
+ One of the implementations is enabled when the stat struct has
+ ::st_atim member, another — when it has ::st_atimensec member.
+ .
+ On alpha, the stat struct has both members, defined as union here:
+ https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/unix/sysv/linux/alpha/bits/stat.h#l48
+ .
+ and then used here:
+ https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/unix/sysv/linux/alpha/bits/stat.h#l92
+ .
+ This patch forcefully disables the second implementation on alpha.
+Author: Michael Cree <mcree@orcon.net.nz>
+Forwarded: https://codereview.qt-project.org/245230
+Last-Update: 2018-11-11
+
+---
+ src/corelib/io/qfilesystemengine_unix.cpp |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/corelib/io/qfilesystemengine_unix.cpp
++++ b/src/corelib/io/qfilesystemengine_unix.cpp
+@@ -287,7 +287,7 @@ mtime(const T &statBuffer, int)
+ { return timespecToMSecs(statBuffer.st_mtimespec); }
+ #endif
+ 
+-#ifndef st_mtimensec
++#if !defined(st_mtimensec) && !defined(__alpha__)
+ // Xtimensec
+ template <typename T>
+ Q_DECL_UNUSED static typename std::enable_if<(&T::st_atimensec, true), qint64>::type
