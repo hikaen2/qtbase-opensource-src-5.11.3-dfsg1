@@ -22866,10 +22866,10 @@
             <firstDayOfWeek>sun</firstDayOfWeek>
             <weekendStart>sat</weekendStart>
             <weekendEnd>sun</weekendEnd>
-            <longDateFormat>dddd, MMMM d, yyyy</longDateFormat>
-            <shortDateFormat>M/d/yy</shortDateFormat>
-            <longTimeFormat>h:mm:ss AP t</longTimeFormat>
-            <shortTimeFormat>h:mm AP</shortTimeFormat>
+            <longDateFormat>yyyy-MM-dd</longDateFormat>
+            <shortDateFormat>yyyy-MM-dd</shortDateFormat>
+            <longTimeFormat>hh:mm:ss</longTimeFormat>
+            <shortTimeFormat>hh:mm</shortTimeFormat>
             <standaloneLongMonths>January;February;March;April;May;June;July;August;September;October;November;December;</standaloneLongMonths>
             <standaloneShortMonths>Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec;</standaloneShortMonths>
             <standaloneNarrowMonths>J;F;M;A;M;J;J;A;S;O;N;D;</standaloneNarrowMonths>
